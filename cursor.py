@@ -9,7 +9,6 @@ This version is a little kinder to your CPU than the shell script with
 the busy-loop that starts a new process for every pointer query.
 """
 from ctypes import cdll, c_int, c_voidp, byref
-import time
 
 xlib = cdll.LoadLibrary('libX11.so.6')
 
@@ -25,6 +24,7 @@ class Cursor(object):
     def __init__(self, display, window_title=None):
         super(Cursor, self).__init__()
         self.display = display
+        # TODO: Use existing window if possible.
         self.window_title = window_title
 
         self.root = xlib.XDefaultRootWindow(self.display)
@@ -58,20 +58,6 @@ class Cursor(object):
             byref(self.unused_int)
         )
 
-    def wrap_pointer_main(self):
-        """
-            Loops monitoring for cursor touching edge two pixels of screen
-            then move the cursor to the other side of the screen at the same
-            vertical position.
-        """
-        while True:
-            self.get_mouse()
-            if self.mousex.value < 2:
-                self.reset_mouse(xpos=MAX_X-2, ypos=self.mousey.value)
-            elif self.mousex.value > (MAX_X-2):
-                self.reset_mouse(xpos=2, ypos=self.mousey.value)
-            time.sleep(SLEEPTIME)
-
 class Display(object):
     """docstring for Display"""
 
@@ -87,14 +73,3 @@ class Display(object):
 
     def __exit__(self, _type, value, traceback):
         xlib.XCloseDisplay(self._display)
-
-def main():
-    """
-        main
-    """
-    with Display() as display:
-        Cursor(display).wrap_pointer_mainar()
-
-
-if __name__ == '__main__':
-    main()
